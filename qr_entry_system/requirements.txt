@@ -1,0 +1,6 @@
+Flask
+PyMySQL
+xhtml2pdf
+qrcode[pil]
+gunicorn
+cryptography

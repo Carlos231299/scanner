@@ -1,0 +1,645 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm">
+        <div>
+            <h2 class="h5 mb-0 text-dark">Panel de Control</h2>
+            <p class="mb-0 text-muted small">Gestión centralizada del sistema</p>
+        </div>
+        <div>
+            <a href="{{ url_for('scanner') }}" class="btn btn-primary shadow-sm"><i class="bi bi-qr-code-scan"></i> 📸
+                Abrir Escáner</a>
+            <button onclick="confirmLogout()" class="btn btn-outline-danger ms-2">Salir</button>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-pills mb-4" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="logs-tab" data-bs-toggle="pill" data-bs-target="#tab-logs" type="button"
+                role="tab" onclick="switchTab('logs')">
+                📋 Registros de Acceso
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#tab-users" type="button"
+                role="tab" onclick="switchTab('users')">
+                👥 Gestión de Usuarios
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="myTabContent">
+
+        <!-- TAB 1: LOGS -->
+        <div class="tab-pane fade show active" id="tab-logs" role="tabpanel">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-primary">Historial de Registros</h5>
+                    <div class="btn-group">
+                        <button onclick="exportLogs()" class="btn btn-outline-success btn-sm">📥 Excel/CSV</button>
+                        <button onclick="exportLogsPDF()" class="btn btn-outline-danger btn-sm">📄 PDF</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filters -->
+                    <div class="row g-2 mb-4 bg-light p-3 rounded">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted">Usuario</label>
+                            <input type="text" id="search-user" class="form-control"
+                                placeholder="Escribe para buscar..." onkeyup="filterLogsList()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted">Acción</label>
+                            <select id="search-type" class="form-select">
+                                <option value="">Todas</option>
+                                <option value="entry">Entrada</option>
+                                <option value="exit">Salida</option>
+                                <option value="start_lunch">Inicio Almuerzo</option>
+                                <option value="end_lunch">Fin Almuerzo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-muted">Fecha Inicio</label>
+                            <input type="date" id="search-date-from" class="form-control">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-muted">Fecha Fin</label>
+                            <input type="date" id="search-date-to" class="form-control">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button onclick="loadLogs()" class="btn btn-primary w-100">🔎 Filtrar</button>
+                        </div>
+                    </div>
+
+                    <!-- Filtered Logs Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Fecha y Hora</th>
+                                    <th class="text-end">Opciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: USERS -->
+        <div class="tab-pane fade" id="tab-users" role="tabpanel">
+            <div class="row">
+                <!-- Register Form -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-person-plus"></i> Nuevo Usuario</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="{{ url_for('register_user') }}" method="post" id="register-form">
+                                <div class="mb-3">
+                                    <label class="form-label">Usuario</label>
+                                    <input type="text" name="username" class="form-control" required autocomplete="off">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Cédula</label>
+                                    <input type="text" name="cedula" class="form-control" required autocomplete="off">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Área</label>
+                                    <input type="text" name="area" class="form-control" autocomplete="off">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Contraseña</label>
+                                    <input type="password" name="password" class="form-control" required
+                                        autocomplete="new-password">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Rol</label>
+                                    <select name="role" class="form-select">
+                                        <option value="employee">Empleado</option>
+                                        <option value="admin">Administrador</option>
+                                        <option value="supervisor">Supervisor (Scanner)</option>
+                                    </select>
+                                </div>
+
+                                <hr>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-flex justify-content-between align-items-center">
+                                        Biometría (Opcional)
+                                        <span id="face-status" class="badge bg-secondary">Esperando cámara...</span>
+                                    </label>
+                                    <div class="face-capture-box bg-dark rounded overflow-hidden position-relative"
+                                        style="height: 240px;">
+                                        <video id="video" class="w-100 h-100 object-fit-cover" autoplay muted
+                                            style="display: none;"></video>
+                                        <div id="camera-placeholder"
+                                            class="d-flex flex-column justify-content-center align-items-center h-100 text-white">
+                                            <i class="bi bi-camera fs-1 mb-2"></i>
+                                            <button type="button" id="btn-start-camera"
+                                                class="btn btn-outline-light btn-sm">Activar Cámara</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="btn-capture-face" class="btn btn-success w-100 mt-2"
+                                        style="display: none;">
+                                        <i class="bi bi-person-bounding-box"></i> Capturar Rostro
+                                    </button>
+                                    <input type="hidden" name="face_descriptor" id="face_descriptor">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100 py-2">Guardar Usuario</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users List Table with Search -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-primary">Usuarios Registrados</h5>
+                            <input type="text" id="user-list-search" class="form-control form-control-sm w-auto"
+                                placeholder="Buscar usuario..." onkeyup="filterUserList()">
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th class="ps-4">Usuario</th>
+                                            <th>Cédula</th>
+                                            <th>Área</th>
+                                            <th>Rol</th>
+                                            <th class="text-end pe-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id">
+                    <div class="mb-3">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" id="edit-username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cédula</label>
+                        <input type="text" id="edit-cedula" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Área</label>
+                        <input type="text" id="edit-area" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rol</label>
+                        <select id="edit-role" class="form-select">
+                            <option value="employee">Empleado</option>
+                            <option value="admin">Administrador</option>
+                            <option value="supervisor">Supervisor (Scanner)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Contraseña (Opcional)</label>
+                        <input type="password" id="edit-password" class="form-control"
+                            placeholder="Dejar en blanco para mantener actual">
+                    </div>
+
+                    <hr>
+
+                    <!-- Edit Face Section -->
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between align-items-center">
+                            Actualizar Biometría
+                            <span id="edit-face-status" class="d-none"></span>
+                        </label>
+                        <div class="face-capture-box bg-dark rounded overflow-hidden position-relative"
+                            style="height: 200px;">
+                            <video id="edit-video" class="w-100 h-100 object-fit-cover" autoplay muted
+                                style="display: none;"></video>
+                            <div id="edit-camera-placeholder"
+                                class="d-flex flex-column justify-content-center align-items-center h-100 text-white">
+                                <i class="bi bi-camera fs-1 mb-2"></i>
+                                <button type="button" id="btn-edit-start-camera"
+                                    class="btn btn-outline-light btn-sm">Abrir Cámara</button>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-edit-capture" class="btn btn-success w-100 mt-2"
+                            style="display: none;">
+                            <i class="bi bi-person-bounding-box"></i> Capturar Foto
+                        </button>
+                        <input type="hidden" id="edit_face_descriptor">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- External Libs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // --- GLOBAL SETUP ---
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('search-date-from').max = today;
+    document.getElementById('search-date-to').max = today;
+
+    // Flash Messages
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    Swal.fire({
+        text: "{{ message }}",
+        icon: "{{ 'error' if 'Error' in message else 'success' }}",
+        toast: true, position: 'top-end', showConfirmButton: false, timer: 4000
+    });
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    // --- FACE API ---
+    const video = document.getElementById('video');
+    const statusFn = document.getElementById('face-status');
+    const faceInput = document.getElementById('face_descriptor');
+    let modelsLoaded = false;
+
+    // Load models immediately
+    Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri('/static/models'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/static/models'),
+        faceapi.nets.faceRecognitionNet.loadFromUri('/static/models')
+    ]).then(() => {
+        modelsLoaded = true;
+        statusFn.innerText = "IA Lista";
+        statusFn.className = "badge bg-success";
+    });
+
+    document.getElementById('btn-start-camera').addEventListener('click', async () => {
+        if (!navigator.mediaDevices) {
+            Swal.fire('Error', 'No se detecta cámara web', 'error');
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            document.getElementById('camera-placeholder').style.display = 'none';
+            document.getElementById('btn-capture-face').style.display = 'block';
+        } catch (e) {
+            Swal.fire('Error', 'Permiso de cámara denegado', 'error');
+        }
+    });
+
+    document.getElementById('btn-capture-face').addEventListener('click', async () => {
+        if (!modelsLoaded) return Swal.fire('Espera', 'Cargando modelos IA...', 'info');
+
+        const detection = await faceapi.detectSingleFace(video).withFaceLandmarks().withFaceDescriptor();
+        if (detection) {
+            faceInput.value = JSON.stringify(Array.from(detection.descriptor));
+            statusFn.innerText = "Rostro Capturado OK";
+            statusFn.className = "badge bg-primary";
+            video.pause();
+            Swal.fire({
+                icon: 'success',
+                title: 'Rostro Capturado',
+                text: 'Ya puedes guardar el usuario',
+                timer: 1500, showConfirmButton: false
+            });
+        } else {
+            Swal.fire('Error', 'No se ha detectado un rostro. Asegúrate de tener buena iluminación.', 'warning');
+        }
+    });
+
+    // --- TAB MANAGEMENT ---
+    function switchTab(tabName) {
+        if (tabName === 'users') loadUsers();
+    }
+
+    // --- USER CRUD ---
+    let allUsers = []; // Cache for local filtering
+
+    function loadUsers() {
+        const tbody = document.getElementById('users-body');
+        const dataList = document.getElementById('users-datalist');
+
+        // Prevent double loading if already populated? No, consistency is better.
+        fetch('/api/users')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    allUsers = data.users;
+                    renderUsers(allUsers);
+
+                    // Populate Search Datalist
+                    dataList.innerHTML = '';
+                    allUsers.forEach(u => {
+                        const option = document.createElement('option');
+                        option.value = u.username;
+                        dataList.appendChild(option);
+                    });
+                }
+            });
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('users-body');
+        tbody.innerHTML = '';
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted">No hay usuarios.</td></tr>';
+            return;
+        }
+
+        users.forEach((u, index) => {
+            let badgeClass = 'badge-soft primary'; // Employee
+            if (u.role === 'admin') badgeClass = 'badge-soft danger';
+            if (u.role === 'supervisor') badgeClass = 'badge-soft warning';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td class="ps-4 fw-medium">${u.username}</td>
+                    <td class="text-muted">${u.cedula}</td>
+                    <td class="text-muted">${u.area}</td>
+                    <td><span class="${badgeClass}">${u.role}</span></td>
+                    <td class="text-end pe-4">
+                        <button onclick="openEditModal(${u.id}, '${u.username}', '${u.role}', '${u.cedula}', '${u.area}')" class="btn btn-light btn-sm text-primary rounded-circle shadow-sm me-1" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button onclick="deleteUser(${u.id})" class="btn btn-light btn-sm text-danger rounded-circle shadow-sm" title="Eliminar"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function filterUserList() {
+        const term = document.getElementById('user-list-search').value.toLowerCase();
+        const filtered = allUsers.filter(u => u.username.toLowerCase().includes(term));
+        renderUsers(filtered);
+    }
+
+    // --- LOGOUT ---
+    function confirmLogout() {
+        Swal.fire({
+            title: '¿Cerrar Sesión?',
+            text: "Tendrás que ingresar tus credenciales nuevamente.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, salir'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{{ url_for('logout') }}";
+            }
+        });
+    }
+
+    // Edit User
+    var editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    let editModelsLoaded = false;
+
+    function openEditModal(id, username, role, cedula, area) {
+        document.getElementById('edit-user-id').value = id;
+        document.getElementById('edit-username').value = username;
+        document.getElementById('edit-role').value = role;
+        document.getElementById('edit-cedula').value = cedula && cedula !== 'null' ? cedula : '';
+        document.getElementById('edit-area').value = area && area !== 'null' ? area : '';
+        document.getElementById('edit-password').value = '';
+
+        // Reset Camera UI in Edit Modal
+        document.getElementById('edit-video').style.display = 'none';
+        document.getElementById('edit-camera-placeholder').style.display = 'flex';
+        document.getElementById('btn-edit-capture').style.display = 'none';
+        document.getElementById('edit-face-status').className = 'd-none';
+        document.getElementById('edit_face_descriptor').value = '';
+
+        editModal.show();
+    }
+
+    document.getElementById('btn-edit-start-camera').addEventListener('click', async () => {
+        // Load models if not already (reusing global modelsLoaded if possible, or check)
+        if (!modelsLoaded) {
+            Swal.fire('Espera', 'Cargando modelos IA...', 'info');
+            return;
+        }
+
+        const videoEl = document.getElementById('edit-video');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+            videoEl.srcObject = stream;
+            videoEl.style.display = 'block';
+            document.getElementById('edit-camera-placeholder').style.display = 'none';
+            document.getElementById('btn-edit-capture').style.display = 'block';
+        } catch (e) {
+            Swal.fire('Error', 'Permiso de cámara denegado', 'error');
+        }
+    });
+
+    document.getElementById('btn-edit-capture').addEventListener('click', async () => {
+        const videoEl = document.getElementById('edit-video');
+        const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
+
+        if (detection) {
+            document.getElementById('edit_face_descriptor').value = JSON.stringify(Array.from(detection.descriptor));
+            const status = document.getElementById('edit-face-status');
+            status.className = "badge bg-success ms-2";
+            status.innerText = "Nueva Foto OK";
+
+            videoEl.pause();
+            // Stop stream
+            videoEl.srcObject.getTracks().forEach(track => track.stop());
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Rostro Actualizado',
+                toast: true, position: 'top-end', timer: 2000, showConfirmButton: false
+            });
+        } else {
+            Swal.fire('Error', 'No se ha detectado un rostro.', 'warning');
+        }
+    });
+
+    function saveUserChanges() {
+        const id = document.getElementById('edit-user-id').value;
+        const formData = new FormData();
+        formData.append('username', document.getElementById('edit-username').value);
+        formData.append('cedula', document.getElementById('edit-cedula').value);
+        formData.append('area', document.getElementById('edit-area').value);
+        formData.append('role', document.getElementById('edit-role').value);
+
+        const pass = document.getElementById('edit-password').value;
+        if (pass) formData.append('password', pass);
+
+        const face = document.getElementById('edit_face_descriptor').value;
+        if (face) formData.append('face_descriptor', face);
+
+        fetch(`/api/users/update/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    editModal.hide();
+                    Swal.fire('Actualizado', 'Usuario modificado correctamente', 'success');
+                    loadUsers();
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            })
+            .catch(err => Swal.fire('Error', 'Fallo de red', 'error'));
+    }
+
+    // Delete User
+    function deleteUser(id) {
+        Swal.fire({
+            title: '¿Confirmar eliminación?',
+            text: "Se borrará el usuario y todo su historial.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/users/delete/${id}`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            Swal.fire('Borrado', 'Usuario eliminado', 'success');
+                            loadUsers();
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    });
+            }
+        });
+    }
+
+    // --- LOGS ACTIONS ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadLogs();
+        // loadUsers() removed to prevent suggestion fetching on load
+    });
+
+    function getFilters() {
+        return new URLSearchParams({
+            username: document.getElementById('search-user').value || '',
+            action_type: document.getElementById('search-type').value || '',
+            date_from: document.getElementById('search-date-from').value || '',
+            date_to: document.getElementById('search-date-to').value || ''
+        });
+    }
+
+    function loadLogs() {
+        const tbody = document.getElementById('logs-body');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3">Cargando...</td></tr>';
+
+        const filters = getFilters();
+        const hasFilters = filters.get('username') || filters.get('action_type') || filters.get('date_from');
+
+        fetch(`/api/logs/search?${filters}`)
+            .then(res => res.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if (data.status === 'error') return; // Handled
+                if (data.logs.length === 0) {
+                    if (hasFilters) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-muted"><i class="bi bi-search fs-3 d-block mb-2"></i><strong>Usuario no encontrado o sin registros</strong><br>Intenta con otros filtros.</td></tr>';
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted">Aún no hay registros en el sistema.</td></tr>';
+                    }
+                    return;
+                }
+                data.logs.forEach(log => {
+                    let badge = 'bg-secondary';
+                    let text = log.type;
+                    if (text === 'entry') { badge = 'bg-success'; text = 'Entrada'; }
+                    if (text === 'exit') { badge = 'bg-danger'; text = 'Salida'; }
+                    if (text.includes('lunch')) badge = 'bg-warning text-dark';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${log.username}</td>
+                            <td><span class="badge ${badge}">${text}</span></td>
+                            <td>${log.timestamp}</td>
+                            <td class="text-end">
+                                <button onclick="deleteLog(${log.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+    }
+
+    function deleteLog(id) {
+        Swal.fire({
+            title: '¿Borrar?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Borrar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/api/logs/delete/${id}`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            loadLogs();
+                            Swal.fire({ icon: 'success', title: 'Borrado', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000 });
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                        }
+                    });
+            }
+        });
+    }
+
+    function filterLogsList() {
+        // Client-side filter for the currently loaded logs
+        const term = document.getElementById('search-user').value.toLowerCase();
+        const rows = document.querySelectorAll('#logs-body tr');
+
+        rows.forEach(row => {
+            const username = row.cells[0]?.textContent?.toLowerCase() || '';
+            if (username.includes(term)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function exportLogs() { window.location.href = `/api/logs/export?${getFilters()}`; }
+    function exportLogsPDF() { window.location.href = `/api/logs/export_pdf?${getFilters()}`; }
+    function exportLogsPDF() { window.open(`/api/logs/export_pdf?${getFilters()}`, '_blank'); }
+</script>
+{% endblock %}

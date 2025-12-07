@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+instance/
+.env
+.DS_Store
+.vscode/
+.idea/
+*.log
+out.txt
+admin_error.txt

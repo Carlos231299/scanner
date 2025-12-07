@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Login Page Special Layout -->
+<div class="login-page-wrapper">
+    <div class="login-container animate-fade-in">
+        <div class="glass-card-login">
+
+            <!-- Icon -->
+            <div class="login-icon-circle">
+                <i class="bi bi-building-lock"></i>
+            </div>
+
+            <!-- Title -->
+            <h2 class="h3 fw-bold text-white mb-1">Bienvenido</h2>
+            <p class="text-white-50 small mb-4">Portal Corporativo de Acceso</p>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div
+                    class="alert alert-danger py-2 small border-0 bg-danger bg-opacity-25 text-white d-flex align-items-center rounded-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <form method="post">
+                <div class="mb-3 text-start">
+                    <label class="form-label text-white-50 small fw-bold ps-1"
+                        style="font-size: 0.75rem; letter-spacing: 1px;">USUARIO</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i
+                                class="bi bi-person-fill"></i></span>
+                        <input type="text" id="username" name="username" class="form-control login-input"
+                            placeholder="Ej. jperez" required autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="mb-4 text-start">
+                    <label class="form-label text-white-50 small fw-bold ps-1"
+                        style="font-size: 0.75rem; letter-spacing: 1px;">CONTRASEÑA</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i
+                                class="bi bi-lock-fill"></i></span>
+                        <input type="password" id="password" name="password" class="form-control login-input"
+                            placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login-premium">
+                    INICIAR SESIÓN <i class="bi bi-arrow-right-short ms-2"></i>
+                </button>
+            </form>
+
+            <div
+                class="mt-4 pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                <small class="text-white-50" style="font-size: 0.7rem;">Sistema de Registro de Asistencias &copy;
+                    2025</small>
+                <small class="text-white-50" style="font-size: 0.7rem;">v2.1 Enterprise</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Force body class for styling
+    document.body.classList.add('login-page');
+</script>
+{% endblock %}

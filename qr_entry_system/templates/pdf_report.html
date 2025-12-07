@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: 'Helvetica', sans-serif;
+            color: #334155;
+            background-color: #ffffff;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #0072ff;
+        }
+
+        h1 {
+            color: #0f172a;
+            margin: 0;
+            font-size: 26px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #64748b;
+            font-size: 11px;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        h3 {
+            color: #0072ff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-left: 4px solid #00c6ff;
+            padding-left: 10px;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 10px;
+            background-color: #fff;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Status Colors */
+        .badge {
+            font-weight: bold;
+            font-size: 9px;
+        }
+
+        .entry {
+            color: #059669;
+        }
+
+        /* Green */
+        .exit {
+            color: #dc2626;
+        }
+
+        /* Red */
+        .lunch {
+            color: #d97706;
+        }
+
+        /* Amber */
+
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Reporte de Asistencia</h1>
+        <p class="subtitle">Sistema de Registro de Asistencia | Generado: {{ logs[0].timestamp if logs else 'N/A' }}</p>
+
+        {% if summary %}
+        <div style="margin-bottom: 30px;">
+            <h3>Resumen de Nómina</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Total Horas</th>
+                        <th>H. Dominicales/Festivos</th>
+                        <th>H. Extras (>8h/sesión)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for username, data in summary.items() %}
+                    <tr>
+                        <td>{{ username }}</td>
+                        <td>{{ data.total_hours }}</td>
+                        <td>{{ data.sunday_holiday_hours }}</td>
+                        <td>{{ data.overtime_hours }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <h3>Detalle de Registros</h3>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="35%">Usuario</th>
+                <th width="30%">Acción</th>
+                <th width="35%">Fecha y Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.username }}</td>
+                <td>
+                    {% if log.type == 'entry' %} <span class="badge entry">ENTRADA</span>
+                    {% elif log.type == 'exit' %} <span class="badge exit">SALIDA</span>
+                    {% elif log.type == 'start_lunch' %} <span class="badge lunch">INICIO ALMUERZO</span>
+                    {% elif log.type == 'end_lunch' %} <span class="badge lunch">FIN ALMUERZO</span>
+                    {% else %} {{ log.type }}
+                    {% endif %}
+                </td>
+                <td>{{ log.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Documento confidencial - Uso interno administrativo
+    </div>
+</body>
+
+</html>

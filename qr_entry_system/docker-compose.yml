@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=example
+      - DB_NAME=qr_entry_db
+      - FLASK_APP=app.py
+      - FLASK_DEBUG=1
+    volumes:
+      - .:/app
+    networks:
+      - qr_net
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: qr_entry_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - qr_net
+
+networks:
+  qr_net:
+
+volumes:
+  db_data:

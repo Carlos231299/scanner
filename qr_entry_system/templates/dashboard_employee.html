@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <h1>Mi Perfil</h1>
+        <div class="user-info">
+            <span>Hola, {{ user.username }}</span>
+            <a href="{{ url_for('logout') }}" class="btn secondary small">Salir</a>
+        </div>
+    </header>
+
+    <div class="card centered-card">
+        <h3>Tu Código de Acceso</h3>
+        <p>Muestra este código al escáner para registrar entradas y salidas.</p>
+
+        <div class="qr-display">
+            {% if user.qr_code_data %}
+            <!-- Logic to generate QR image on the fly will be added to app.py -->
+            <img src="{{ url_for('generate_qr_image') }}" alt="Tu Código QR">
+            {% else %}
+            <p>No tienes un código asignado. Contacta al administrador.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

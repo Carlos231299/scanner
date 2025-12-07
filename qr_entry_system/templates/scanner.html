@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    body {
+        background-color: #f8fafc;
+    }
+
+    .action-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+        height: 100%;
+    }
+
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-card.active {
+        border-color: #0d6efd;
+        background-color: #f0f7ff;
+        transform: scale(1.02);
+    }
+
+    .action-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    #scanner-section {
+        display: none;
+    }
+
+    #selection-section {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+</style>
+
+<div class="container py-5" style="max-width: 900px;">
+
+    <!-- Top Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="h3 text-dark fw-bold text-white">Sistema de Registro de Asistencias</h1>
+        {% if role != 'supervisor' %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+        {% else %}
+        <button onclick="confirmLogout()" class="btn btn-outline-danger">
+            <i class="bi bi-box-arrow-right"></i> Salir
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- UI: ACTION SELECTION -->
+    <div id="selection-section" class="animate-fade-in">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold mb-2">Bienvenido</h2>
+            <p class="text-muted">Selecciona la acción que deseas realizar</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-6 col-md-3">
+                <div class="glass-card p-4 text-center h-100 d-flex flex-column justify-content-center align-items-center cursor-pointer"
+                    onclick="selectAction('entry', 'Entrada')" style="cursor: pointer;">
+                    <div class="action-icon mb-3">👋</div>
+                    <h5 class="fw-bold mb-1">Entrada</h5>
+                    <small class="text-muted">Iniciar turno</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="glass-card p-4 text-center h-100 d-flex flex-column justify-content-center align-items-center cursor-pointer"
+                    onclick="selectAction('start_lunch', 'Inicio Almuerzo')" style="cursor: pointer;">
+                    <div class="action-icon mb-3">🍔</div>
+                    <h5 class="fw-bold mb-1">Almuerzo</h5>
+                    <small class="text-muted">Buen provecho</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="glass-card p-4 text-center h-100 d-flex flex-column justify-content-center align-items-center cursor-pointer"
+                    onclick="selectAction('end_lunch', 'Fin Almuerzo')" style="cursor: pointer;">
+                    <div class="action-icon mb-3">⚡</div>
+                    <h5 class="fw-bold mb-1">Regreso</h5>
+                    <small class="text-muted">Continuar turno</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="glass-card p-4 text-center h-100 d-flex flex-column justify-content-center align-items-center cursor-pointer"
+                    onclick="selectAction('exit', 'Salida')" style="cursor: pointer;">
+                    <div class="action-icon mb-3">🏠</div>
+                    <h5 class="fw-bold mb-1">Salida</h5>
+                    <small class="text-muted">Hasta luego</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI: SCANNER -->
+    <div id="scanner-section" class="mt-4">
+        <div class="card shadow-lg border-0 overflow-hidden">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">
+                    <span id="current-action-label" class="fw-bold">ACCIÓN</span>
+                </h5>
+                <button onclick="resetSelection()" class="btn btn-sm btn-light text-primary fw-bold">Cancelar</button>
+            </div>
+
+            <div class="card-body p-0 bg-dark position-relative" style="height: 500px;">
+                <!-- Video EL -->
+                <video id="video-feed" autoplay muted playsinline class="w-100 h-100"
+                    style="object-fit: cover;"></video>
+
+                <!-- Overlays -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                    style="pointer-events: none;">
+
+                    <!-- Premium Tech Frame -->
+                    <div class="tech-frame">
+                        <div class="tech-corner tl"></div>
+                        <div class="tech-corner tr"></div>
+                        <div class="tech-corner bl"></div>
+                        <div class="tech-corner br"></div>
+                        <div class="scan-line"></div>
+                    </div>
+
+                </div>
+
+                <div id="status-overlay"
+                    class="position-absolute bottom-0 start-0 w-100 bg-black bg-opacity-75 text-white p-3 text-center">
+                    <h5 class="mb-0">
+                        <div class="spinner-border spinner-border-sm text-light me-2"></div> Buscando rostro...
+                    </h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Libs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<script>
+    let currentAction = null;
+    let isProcessing = false;
+    let faceMatcher = null;
+    let videoStream = null;
+    const videoEl = document.getElementById('video-feed');
+    const overlay = document.getElementById('status-overlay');
+
+    function confirmLogout() {
+        Swal.fire({
+            title: '¿Cerrar Sesión?',
+            text: "Volverás a la pantalla de inicio.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, salir'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = "{{ url_for('logout') }}";
+            }
+        });
+    }
+
+    // 1. Load Models on Page Load
+    Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri('/static/models'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/static/models'),
+        faceapi.nets.faceRecognitionNet.loadFromUri('/static/models')
+    ]).then(loadUsers).catch(err => Swal.fire('Error', 'Fallo al cargar IA', 'error'));
+
+    async function loadUsers() {
+        try {
+            const res = await fetch('/api/users/faces');
+            const data = await res.json();
+            if (data.status === 'success' && data.users.length > 0) {
+                const labeledDescriptors = data.users.map(u => new faceapi.LabeledFaceDescriptors(u.username, [new Float32Array(u.descriptor)]));
+                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.55); // Threshold 0.55
+                console.log("Sistema Biométrico Listo: " + data.users.length + " usuarios.");
+            } else {
+                console.warn("No hay usuarios con rostros registrados.");
+            }
+        } catch (e) { console.error("Error loading faces", e); }
+    }
+
+    // 2. Action Flow
+    function selectAction(actionKey, label) {
+        currentAction = actionKey;
+        document.getElementById('selection-section').style.display = 'none';
+        document.getElementById('scanner-section').style.display = 'block';
+        document.getElementById('current-action-label').innerText = label.toUpperCase();
+
+        startCamera();
+    }
+
+    function resetSelection() {
+        stopCamera();
+        document.getElementById('scanner-section').style.display = 'none';
+        document.getElementById('selection-section').style.display = 'block';
+        currentAction = null;
+        isProcessing = false;
+        overlay.className = "position-absolute bottom-0 start-0 w-100 bg-black bg-opacity-75 text-white p-3 text-center";
+        overlay.innerHTML = '<h5 class="mb-0"><div class="spinner-border spinner-border-sm text-light me-2"></div> Buscando rostro...</h5>';
+    }
+
+    // 3. Camera & Detection
+    async function startCamera() {
+        if (navigator.mediaDevices.getUserMedia) {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                videoEl.srcObject = videoStream;
+                videoEl.onplay = startFaceLoop;
+            } catch (err) {
+                Swal.fire('Error', 'No se pudo acceder a la cámara web.', 'error');
+            }
+        }
+    }
+
+    function stopCamera() {
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        clearInterval(faceLoopId);
+    }
+
+    let faceLoopId;
+    function startFaceLoop() {
+        clearInterval(faceLoopId);
+        faceLoopId = setInterval(async () => {
+            if (isProcessing || !faceMatcher || videoEl.paused || videoEl.ended) return;
+
+            const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
+
+            if (detection) {
+                const match = faceMatcher.findBestMatch(detection.descriptor);
+
+                if (match.label !== 'unknown') {
+                    // Success Match
+                    processLog(match.label);
+                } else {
+                    // Unknown Face
+                    overlay.className = 'position-absolute bottom-0 start-0 w-100 bg-warning text-dark p-3 text-center';
+                    overlay.innerHTML = `<h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Rostro desconocido (${Math.round(match.distance * 100) / 100})</h5>`;
+                }
+            } else {
+                // No Face
+                if (!isProcessing && overlay.innerText.includes('Rostro desconocido')) {
+                    overlay.className = "position-absolute bottom-0 start-0 w-100 bg-black bg-opacity-75 text-white p-3 text-center";
+                    overlay.innerHTML = '<h5 class="mb-0"><div class="spinner-border spinner-border-sm text-light me-2"></div> Buscando rostro...</h5>';
+                }
+            }
+        }, 500); // Poll every 500ms
+    }
+
+    function processLog(username) {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        overlay.className = 'position-absolute bottom-0 start-0 w-100 bg-success text-white p-3 text-center';
+        overlay.innerHTML = `<h5 class="mb-0"><i class="bi bi-check-circle"></i> ¡Hola ${username}! Registrando...</h5>`;
+
+        fetch('/api/log_scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action_type: currentAction, username: username })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: data.message,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => resetSelection());
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                    isProcessing = false;
+                    resetSelection(); // Or let them try again? Safer to reset to avoid loop
+                }
+            })
+            .catch(err => {
+                isProcessing = false;
+                Swal.fire('Error de Conexión', 'Intenta de nuevo.', 'error');
+            });
+    }
+
+</script>
+{% endblock %}
