@@ -112,7 +112,10 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Cédula</label>
-                                    <input type="text" name="cedula" class="form-control" required autocomplete="off">
+                                    <input type="text" name="cedula" class="form-control" required autocomplete="off"
+                                        inputmode="numeric" pattern="\d{7,10}" minlength="7" maxlength="10"
+                                        oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                        title="Debe contener entre 7 y 10 dígitos numéricos">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Área</label>
@@ -220,7 +223,10 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Cédula</label>
-                        <input type="text" id="edit-cedula" class="form-control" required>
+                        <input type="text" id="edit-cedula" class="form-control" required inputmode="numeric"
+                            pattern="\d{7,10}" minlength="7" maxlength="10"
+                            oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                            title="Debe contener entre 7 y 10 dígitos numéricos">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Área</label>
