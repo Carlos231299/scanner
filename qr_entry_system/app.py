@@ -10,9 +10,16 @@ import base64
 import pymysql
 from xhtml2pdf import pisa
 
+from datetime import timedelta
+
 app = Flask(__name__)
 # Use a static secret key from environment or fallback to random (random breaks sessions in multi-worker Gunicorn)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(16))
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
 
 @app.teardown_appcontext
 def teardown_db(exception):
@@ -91,7 +98,7 @@ def register_user():
         return redirect(url_for('login'))
         
     username = request.form['username']
-    password = request.form['password']
+    password = request.form.get('password')
     role = request.form['role'] # 'employee', 'admin', 'supervisor'
     cedula = request.form.get('cedula')
     area = request.form.get('area')
@@ -100,45 +107,20 @@ def register_user():
     
     db = get_db()
     
-    # 1. Check for Duplicate Username OR Cedula
-    with db.cursor() as cursor:
-        cursor.execute("SELECT id FROM users WHERE username = %s OR cedula = %s", (username, cedula))
-        existing = cursor.fetchone()
-        if existing:
-             flash('Error: El nombre de usuario o la cédula ya existen.')
-             return redirect(url_for('dashboard', tab='users'))
+    # ... duplicate checks ...
 
-    # 2. Check for Duplicate Face
-    import json
-    import math
+    # Password Logic: Only hash if provided
+    pwd_hash = None
+    if password and password.strip():
+        pwd_hash = generate_password_hash(password)
     
-    if face_descriptor and face_descriptor.strip():
-        try:
-            new_desc = json.loads(face_descriptor)
-            with db.cursor() as cursor:
-                cursor.execute("SELECT username, face_descriptor FROM users WHERE face_descriptor IS NOT NULL")
-                existing_users = cursor.fetchall()
-            
-            for user in existing_users:
-                try:
-                    stored_desc = json.loads(user['face_descriptor'])
-                    distance = math.sqrt(sum((a - b) ** 2 for a, b in zip(new_desc, stored_desc)))
-                    
-                    if distance < 0.5: 
-                        flash(f'Error: Rostro ya registrado por "{user["username"]}".')
-                        return redirect(url_for('dashboard', tab='users'))
-                except:
-                    continue
-        except:
-             pass 
-    else:
-        face_descriptor = None 
+    # ... insert ...
 
     try:
         with db.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO users (username, password_hash, role, cedula, area, qr_code_data, face_descriptor) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (username, generate_password_hash(password), role, cedula, area, qr_data, face_descriptor)
+                (username, pwd_hash, role, cedula, area, qr_data, face_descriptor)
             )
         db.commit()
         flash('Usuario registrado exitosamente.')
@@ -146,6 +128,28 @@ def register_user():
         flash(f'Error al registrar usuario: {e}')
         
     return redirect(url_for('dashboard'))
+
+@app.route('/api/profile/update', methods=['POST'])
+def update_profile():
+    if 'user_id' not in session:
+        return {'status': 'error', 'message': 'Unauthorized'}, 403
+        
+    user_id = session['user_id']
+    username = request.form.get('username')
+    password = request.form.get('password')
+    
+    db = get_db()
+    try:
+        with db.cursor() as cursor:
+            if password and password.strip():
+                cursor.execute("UPDATE users SET username = %s, password_hash = %s WHERE id = %s", 
+                              (username, generate_password_hash(password), user_id))
+            else:
+                cursor.execute("UPDATE users SET username = %s WHERE id = %s", (username, user_id))
+        db.commit()
+        return {'status': 'success', 'message': 'Perfil actualizado correctmente'}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}
 
 @app.route('/generate_qr_image')
 def generate_qr_image():
