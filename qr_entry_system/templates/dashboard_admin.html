@@ -355,13 +355,18 @@
 
     // Load models immediately
     Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'), // Optimized for mobile
-        faceapi.nets.faceLandmark68TinyNet.loadFromUri('/static/models'),
+        faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
+        faceapi.nets.faceLandmark68Net.loadFromUri('/static/models'),
         faceapi.nets.faceRecognitionNet.loadFromUri('/static/models')
     ]).then(() => {
         modelsLoaded = true;
         statusFn.innerText = "IA Lista";
         statusFn.className = "badge bg-success";
+    }).catch(err => {
+        console.error(err);
+        statusFn.innerText = "Error IA: " + err.message;
+        statusFn.className = "badge bg-danger";
+        Swal.fire('Error', 'Fallo al cargar modelos: ' + err.message, 'error');
     });
 
     document.getElementById('btn-start-camera').addEventListener('click', async () => {
@@ -385,7 +390,7 @@
 
         // Use Tiny Options
         const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
-        const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks(true).withFaceDescriptor();
+        const detection = await faceapi.detectSingleFace(video, options).withFaceLandmarks().withFaceDescriptor();
         if (detection) {
             faceInput.value = JSON.stringify(Array.from(detection.descriptor));
             statusFn.innerText = "Rostro Capturado OK";
@@ -528,7 +533,7 @@
     document.getElementById('btn-edit-capture').addEventListener('click', async () => {
         const videoEl = document.getElementById('edit-video');
         const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
-        const detection = await faceapi.detectSingleFace(videoEl, options).withFaceLandmarks(true).withFaceDescriptor();
+        const detection = await faceapi.detectSingleFace(videoEl, options).withFaceLandmarks().withFaceDescriptor();
 
         if (detection) {
             document.getElementById('edit_face_descriptor').value = JSON.stringify(Array.from(detection.descriptor));
