@@ -253,7 +253,9 @@
         faceLoopId = setInterval(async () => {
             if (isProcessing || !faceMatcher || videoEl.paused || videoEl.ended) return;
 
-            const detection = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceDescriptor();
+            // AGGRESSIVE: inputSize 224 (fastest), scoreThreshold 0.5
+            const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+            const detection = await faceapi.detectSingleFace(videoEl, options).withFaceLandmarks(true).withFaceDescriptor();
 
             if (detection) {
                 const match = faceMatcher.findBestMatch(detection.descriptor);
@@ -273,7 +275,7 @@
                     overlay.innerHTML = '<h5 class="mb-0"><div class="spinner-border spinner-border-sm text-light me-2"></div> Buscando rostro...</h5>';
                 }
             }
-        }, 500); // Poll every 500ms
+        }, 1200); // AGGRESSIVE: Poll every 1.2 seconds instead of 500ms
     }
 
     function processLog(username) {
