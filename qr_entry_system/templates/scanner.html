@@ -180,8 +180,8 @@
 
     // 1. Load Models on Page Load
     Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri('/static/models'),
-        faceapi.nets.faceLandmark68Net.loadFromUri('/static/models'),
+        faceapi.nets.tinyFaceDetector.loadFromUri('/static/models'),
+        faceapi.nets.faceLandmark68TinyNet.loadFromUri('/static/models'),
         faceapi.nets.faceRecognitionNet.loadFromUri('/static/models')
     ]).then(loadUsers).catch(err => Swal.fire('Error', 'Fallo al cargar IA', 'error'));
 
@@ -223,7 +223,14 @@
     async function startCamera() {
         if (navigator.mediaDevices.getUserMedia) {
             try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                // Lower resolution for mobile performance
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
                 videoEl.srcObject = videoStream;
                 videoEl.onplay = startFaceLoop;
             } catch (err) {
@@ -246,7 +253,7 @@
         faceLoopId = setInterval(async () => {
             if (isProcessing || !faceMatcher || videoEl.paused || videoEl.ended) return;
 
-            const detection = await faceapi.detectSingleFace(videoEl).withFaceLandmarks().withFaceDescriptor();
+            const detection = await faceapi.detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(true).withFaceDescriptor();
 
             if (detection) {
                 const match = faceMatcher.findBestMatch(detection.descriptor);
