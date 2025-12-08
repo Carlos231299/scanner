@@ -12,6 +12,17 @@ except ImportError as e:
 print("Defining constants...")
 DB_NAME = os.environ.get('DB_NAME', 'qr_entry_db')
 
+def force_reset_tables(cursor):
+    print("!!! FORCING FULL TABLE RESET !!!")
+    try:
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+        cursor.execute("DROP TABLE IF EXISTS logs")
+        cursor.execute("DROP TABLE IF EXISTS users")
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+        print("Tables dropped successfully.")
+    except Exception as e:
+        print(f"Error dropping tables: {e}")
+
 TABLES = {}
 TABLES['users'] = (
     "CREATE TABLE `users` ("

@@ -11,7 +11,8 @@
         <div>
             <a href="{{ url_for('scanner') }}" class="btn btn-primary shadow-sm"><i class="bi bi-qr-code-scan"></i> 📸
                 Abrir Escáner</a>
-            <button onclick="openProfileModal()" class="btn btn-outline-primary ms-2"><i class="bi bi-person-circle"></i> Mi Perfil</button>
+            <button onclick="openProfileModal()" class="btn btn-outline-primary ms-2"><i
+                    class="bi bi-person-circle"></i> Mi Perfil</button>
             <button onclick="confirmLogout()" class="btn btn-outline-danger ms-2">Salir</button>
         </div>
     </div>
@@ -114,11 +115,21 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Área</label>
-                                    <input type="text" name="area" class="form-control" autocomplete="off">
+                                    <select name="area" class="form-select">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Ingeniería">Ingeniería</option>
+                                        <option value="Recursos Humanos">Recursos Humanos</option>
+                                        <option value="Administración">Administración</option>
+                                        <option value="Planta">Planta</option>
+                                        <option value="Seguridad">Seguridad</option>
+                                        <option value="Gerencia">Gerencia</option>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Contraseña <small class="text-muted">(Opcional para empleados)</small></label>
-                                    <input type="password" name="password" class="form-control" autocomplete="new-password">
+                                    <label class="form-label">Contraseña <small class="text-muted">(Opcional para
+                                            empleados)</small></label>
+                                    <input type="password" name="password" class="form-control"
+                                        autocomplete="new-password">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Rol</label>
@@ -212,7 +223,15 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Área</label>
-                        <input type="text" id="edit-area" class="form-control">
+                        <select id="edit-area" class="form-select">
+                            <option value="">Seleccionar...</option>
+                            <option value="Ingeniería">Ingeniería</option>
+                            <option value="Recursos Humanos">Recursos Humanos</option>
+                            <option value="Administración">Administración</option>
+                            <option value="Planta">Planta</option>
+                            <option value="Seguridad">Seguridad</option>
+                            <option value="Gerencia">Gerencia</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Rol</label>
@@ -275,11 +294,13 @@
                 <form id="profile-form">
                     <div class="mb-3">
                         <label class="form-label">Usuario</label>
-                        <input type="text" id="profile-username" class="form-control" value="{{ user.username }}" required>
+                        <input type="text" id="profile-username" class="form-control" value="{{ user.username }}"
+                            required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nueva Contraseña</label>
-                        <input type="password" id="profile-password" class="form-control" placeholder="Dejar vacío para no cambiar">
+                        <input type="password" id="profile-password" class="form-control"
+                            placeholder="Dejar vacío para no cambiar">
                     </div>
                     <div class="alert alert-info small">
                         <i class="bi bi-info-circle"></i> Aquí puedes cambiar tu nombre de acceso y contraseña.
@@ -583,12 +604,12 @@
         const formData = new FormData();
         formData.append('username', document.getElementById('profile-username').value);
         const pass = document.getElementById('profile-password').value;
-        if(pass) formData.append('password', pass);
+        if (pass) formData.append('password', pass);
 
         fetch('/api/profile/update', { method: 'POST', body: formData })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') {
+                if (data.status === 'success') {
                     profileModal.hide();
                     Swal.fire('Éxito', 'Perfil actualizado', 'success');
                     setTimeout(() => location.reload(), 1000);
