@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 from db import get_db, close_db
 import qrcode
+import os
 import io
 import csv
 import base64
@@ -10,7 +11,8 @@ import pymysql
 from xhtml2pdf import pisa
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(16)
+# Use a static secret key from environment or fallback to random (random breaks sessions in multi-worker Gunicorn)
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
 @app.teardown_appcontext
 def teardown_db(exception):
