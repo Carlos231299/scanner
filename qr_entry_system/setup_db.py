@@ -29,7 +29,7 @@ TABLES['users'] = (
     "  `id` int(11) NOT NULL AUTO_INCREMENT,"
     "  `username` varchar(50) NOT NULL,"
     "  `password_hash` varchar(255) DEFAULT NULL,"
-    "  `role` enum('admin','employees','supervisor') NOT NULL DEFAULT 'employee',"
+    "  `role` enum('admin','employee','supervisor') NOT NULL DEFAULT 'employee',"
     "  `cedula` varchar(20) DEFAULT NULL,"
     "  `area` varchar(100) DEFAULT NULL,"
     "  `qr_code_data` varchar(255) NOT NULL,"
