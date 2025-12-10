@@ -26,12 +26,14 @@
                 📋 Registros de Acceso
             </button>
         </li>
+        {% if role == 'admin' %}
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#tab-users" type="button"
                 role="tab" onclick="switchTab('users')">
                 👥 Gestión de Usuarios
             </button>
         </li>
+        {% endif %}
     </ul>
 
     <div class="tab-content" id="myTabContent">
@@ -95,6 +97,7 @@
             </div>
         </div>
 
+        {% if role == 'admin' %}
         <!-- TAB 2: USERS -->
         <div class="tab-pane fade" id="tab-users" role="tabpanel">
             <div class="row">
@@ -203,6 +206,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 
@@ -682,7 +686,9 @@
                             <td><span class="badge ${badge}">${text}</span></td>
                             <td>${log.timestamp}</td>
                             <td class="text-end">
+                                {% if role == 'admin' %}
                                 <button onclick="deleteLog(${log.id})" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                {% endif %}
                             </td>
                         </tr>
                     `;

@@ -47,6 +47,119 @@
         }
     }
 </style>
+<style>
+    /* Futuristic Scanner Styles */
+    :root {
+        --neon-blue: #00f3ff;
+        --neon-purple: #bc13fe;
+        --cyber-bg: #0a0a12;
+    }
+
+    body {
+        background-color: var(--cyber-bg);
+        color: #fff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .tech-frame {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border: 2px solid rgba(0, 243, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        overflow: hidden;
+    }
+
+    .tech-corner {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--neon-blue);
+        box-shadow: 0 0 10px var(--neon-blue);
+    }
+
+    .tl {
+        top: 10px;
+        left: 10px;
+        border-right: 0;
+        border-bottom: 0;
+    }
+
+    .tr {
+        top: 10px;
+        right: 10px;
+        border-left: 0;
+        border-bottom: 0;
+    }
+
+    .bl {
+        bottom: 10px;
+        left: 10px;
+        border-right: 0;
+        border-top: 0;
+    }
+
+    .br {
+        bottom: 10px;
+        right: 10px;
+        border-left: 0;
+        border-top: 0;
+    }
+
+    .scan-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--neon-blue);
+        box-shadow: 0 0 20px 4px var(--neon-blue);
+        animation: scan 2s linear infinite;
+        opacity: 0.6;
+    }
+
+    @keyframes scan {
+        0% {
+            top: 0%;
+            opacity: 0;
+        }
+
+        10% {
+            opacity: 1;
+        }
+
+        90% {
+            opacity: 1;
+        }
+
+        100% {
+            top: 100%;
+            opacity: 0;
+        }
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        /* Darker glass */
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+    }
+
+    .glass-card:hover {
+        background: rgba(0, 243, 255, 0.1);
+        border-color: var(--neon-blue);
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+    }
+
+    h1,
+    h2,
+    h3,
+    h5,
+    span.fw-bold {
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    }
+</style>
 
 <div class="container py-5" style="max-width: 900px;">
 

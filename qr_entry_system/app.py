@@ -69,17 +69,18 @@ def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # Safety check for role redirection
-    if session.get('role') == 'supervisor':
-        return redirect(url_for('scanner'))
+    # Allow both admin and supervisor to view dashboard
+    # Specific elements will be hidden in the template based on role
         
     db = get_db()
     with db.cursor() as cursor:
         cursor.execute("SELECT * FROM users WHERE id = %s", (session['user_id'],))
         current_user = cursor.fetchone()
         
-    if session['role'] == 'admin':
+    # Both ADMIN and SUPERVISOR use the admin dashboard template now (with restricted view for supervisor)
+    if session['role'] in ['admin', 'supervisor']:
         with db.cursor() as cursor:
+            # Supervisors see same logs as admin
             cursor.execute("""
                 SELECT logs.type, logs.timestamp, users.username 
                 FROM logs 
@@ -88,7 +89,7 @@ def dashboard():
                 LIMIT 20
             """)
             recent_logs = cursor.fetchall()
-        return render_template('dashboard_admin.html', user=current_user, recent_logs=recent_logs)
+        return render_template('dashboard_admin.html', user=current_user, recent_logs=recent_logs, role=session['role'])
     else:
         return render_template('dashboard_employee.html', user=current_user)
 
@@ -351,7 +352,7 @@ def delete_user(user_id):
 
 @app.route('/api/logs/search')
 def search_logs():
-    if 'user_id' not in session or session['role'] != 'admin':
+    if 'user_id' not in session or session['role'] not in ['admin', 'supervisor']:
         return {'status': 'error', 'message': 'Unauthorized'}, 403
 
     username = request.args.get('username', '')
@@ -418,7 +419,7 @@ def delete_log(log_id):
 
 @app.route('/api/logs/export_pdf')
 def export_logs_pdf():
-    if 'user_id' not in session or session['role'] != 'admin':
+    if 'user_id' not in session or session['role'] not in ['admin', 'supervisor']:
         return redirect(url_for('login'))
         
     # Reuse Search Logic
@@ -548,7 +549,7 @@ def export_logs_pdf():
 
 @app.route('/api/logs/export')
 def export_logs():
-    if 'user_id' not in session or session['role'] != 'admin':
+    if 'user_id' not in session or session['role'] not in ['admin', 'supervisor']:
         return redirect(url_for('login'))
         
     # Reuse Search Logic (Clean Code Refactoring would be better, but duplication is acceptable for now)
